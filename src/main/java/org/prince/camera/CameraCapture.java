@@ -112,7 +112,7 @@ public class CameraCapture {
 				true);
 		long startTime = System.currentTimeMillis();
 		Mat videoFrame = new Mat();
-		while(System.currentTimeMillis() - startTime < 10000) {
+		while(System.currentTimeMillis() - startTime <= 10000) {
 			System.out.println(java.time.LocalTime.now());
 			if(videoCapture.read(videoFrame)) {
 				videoWriter.write(videoFrame);

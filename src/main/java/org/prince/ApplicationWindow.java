@@ -6,6 +6,7 @@ import javax.swing.JFrame;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
+import org.prince.SerialCommunication.ESP32;
 import org.prince.camera.CameraCapture;
 import org.prince.configuration.ConfigManager;
 import org.prince.configuration.Fields;
@@ -27,6 +28,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 
 import java.awt.event.ActionListener;
+import java.util.LinkedList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,6 +37,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.JTextField;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 
 
@@ -53,6 +57,12 @@ public class ApplicationWindow {
 	private boolean isRecording = false;
 //	private String saveToFilePath;
 	private ConfigManager configManager;
+	private JMenu Port_Menu;
+	private int portRequest = 0;
+	private ESP32 esp32;
+	private boolean isESP32 = false;
+	private JMenuItem portList[];
+	private int selectedPortIndex;
 
 	/**
 	 * Launch the application.
@@ -223,6 +233,21 @@ public class ApplicationWindow {
 		JMenuItem mntmNewMenuItem_3 = new JMenuItem("Save Location");
 		mntmNewMenuItem_3.addActionListener( e -> new SampleDialog(frame, configManager).setVisible(true));
 		mnNewMenu_1.add(mntmNewMenuItem_3);
+		
+		Port_Menu = new JMenu("COM PORTS");
+		Port_Menu.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if(!isESP32) {
+					esp32 = new ESP32();
+					isESP32 = true;
+				}
+				if(portRequest == 0) {
+					getPortList();
+				}
+			}
+		});
+		mnNewMenu_1.add(Port_Menu);
 	}
 	
 	private void actionButton() {
@@ -266,6 +291,7 @@ public class ApplicationWindow {
 			RecordingTask recordingTask = new RecordingTask();
 			isRecording = true;
 			recordingFuture = service.submit(recordingTask);
+			ESP32Con();
 		}
 	}
 	
@@ -277,6 +303,31 @@ public class ApplicationWindow {
 				isRecording = false;
 			}
 		}
+	}
+	
+	int az;
+	private void getPortList() {
+		LinkedList<String> portNameList = esp32.getPortNameList();
+		if(!portNameList.isEmpty()) {
+			portList = null;
+			portList = new JMenuItem[portNameList.size()];
+			Port_Menu.removeAll();
+			for(az=0; az<portNameList.size(); az++) {
+				portList[az] = new JMenuItem(portNameList.get(az));
+				portList[az].addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						System.out.println(portNameList.get(az-1)+ " is selected");
+						selectedPortIndex = az-1;
+					}
+				});
+				Port_Menu.add(portList[az]);
+			}
+		}
+	}
+	
+	private void ESP32Con() {
+		System.out.println("ESPcon called");
+		esp32.sendMessage(selectedPortIndex);
 	}
 	
 	private void getResourcesReleased() {
