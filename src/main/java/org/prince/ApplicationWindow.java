@@ -6,8 +6,10 @@ import javax.swing.JFrame;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
-import org.opencv.videoio.VideoWriter;
 import org.prince.camera.CameraCapture;
+import org.prince.configuration.ConfigManager;
+import org.prince.configuration.Fields;
+import org.prince.properties.SampleDialog;
 
 import java.awt.BorderLayout;
 import javax.swing.JPanel;
@@ -20,11 +22,9 @@ import java.awt.Color;
 import javax.swing.JLabel;
 import java.awt.Font;
 import java.awt.Image;
-import java.awt.FlowLayout;
 import javax.swing.SwingConstants;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JFileChooser;
 
 import java.awt.event.ActionListener;
 import java.util.concurrent.Callable;
@@ -51,7 +51,8 @@ public class ApplicationWindow {
 	private JButton startBtn;
 	private JTextField RCode_TF;
 	private boolean isRecording = false;
-	private VideoWriter videoWriter;
+//	private String saveToFilePath;
+	private ConfigManager configManager;
 
 	/**
 	 * Launch the application.
@@ -80,7 +81,9 @@ public class ApplicationWindow {
 	 * Create the application.
 	 */
 	public ApplicationWindow() {
+		configManager = new ConfigManager();
 		initialize();
+		getapplicationDataSession();
 	}
 
 	/**
@@ -92,6 +95,7 @@ public class ApplicationWindow {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				getResourcesReleased();
+				setApplicationDataSession();
 			}
 		});
 		frame.setBounds(100, 100, 1500, 1000);
@@ -147,6 +151,8 @@ public class ApplicationWindow {
 		ControlPanel_RP.setLayout(null);
 		
 		startBtn = new JButton("Start Live Feed");
+		startBtn.setMultiClickThreshhold(1L);
+		startBtn.setFocusPainted(false);
 		startBtn.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		startBtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -167,7 +173,7 @@ public class ApplicationWindow {
 		ControlPanel_RP.add(RCode_TF);
 		RCode_TF.setColumns(10);
 		
-		JButton recordBtn = new JButton("Start Live Feed");
+		JButton recordBtn = new JButton("Start Recording");
 		recordBtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				recordBtnAction();
@@ -188,8 +194,35 @@ public class ApplicationWindow {
 		JMenu mnNewMenu = new JMenu("View");
 		menuBar.add(mnNewMenu);
 		
+		JMenuItem mntmNewMenuItem_1 = new JMenuItem("Restore Defaults");
+		mntmNewMenuItem_1.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				System.out.println("Resotre called");
+				configManager.restoreDefaults();
+				RCode_TF.setText(configManager.getProperty("savePath"));
+			}
+		});
+		mnNewMenu.add(mntmNewMenuItem_1);
+		
 		JMenuItem mntmNewMenuItem = new JMenuItem("Recording View");
 		mnNewMenu.add(mntmNewMenuItem);
+		
+		JMenuItem mntmNewMenuItem_2 = new JMenuItem("Save Settings");
+		mntmNewMenuItem_2.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				System.out.println("Save called");
+				configManager.setProperty("savePath", RCode_TF.getText());
+				configManager.saveUserProperties();
+			}
+		});
+		mnNewMenu.add(mntmNewMenuItem_2);
+		
+		JMenu mnNewMenu_1 = new JMenu("Properties");
+		menuBar.add(mnNewMenu_1);
+		
+		JMenuItem mntmNewMenuItem_3 = new JMenuItem("Save Location");
+		mntmNewMenuItem_3.addActionListener( e -> new SampleDialog(frame, configManager).setVisible(true));
+		mnNewMenu_1.add(mntmNewMenuItem_3);
 	}
 	
 	private void actionButton() {
@@ -251,6 +284,19 @@ public class ApplicationWindow {
 			cameraCapture.releaseResources();
 		}
 		service.shutdownNow();
+	}
+	
+	private  void getapplicationDataSession() {
+//		RCode_TF.setText(configManager.getProperty("savePath"));
+//		Fields path = Fields.savePath;
+		RCode_TF.setText(configManager.getProperty(Fields.savePath.toString()));
+	}
+	
+	private void setApplicationDataSession() {
+//		String path = RCode_TF.getText();
+//		configManager.setProperty("savePath", path);
+		configManager.saveUserProperties();
+		System.out.println("Data saved successfully!");
 	}
 	
 	private class FeedingTask implements Callable<Void>{

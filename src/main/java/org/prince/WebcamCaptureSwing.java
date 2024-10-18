@@ -23,7 +23,7 @@ public class WebcamCaptureSwing extends JFrame {
 
     public WebcamCaptureSwing() {
         // Initialize VideoCapture (OpenCV)
-        capture = new VideoCapture(0);
+        capture = new VideoCapture(1);
         
 //        FPS = capture.get(org.opencv.videoio.Videoio.CAP_PROP_FPS);
 //        if(FPS == 0) {
