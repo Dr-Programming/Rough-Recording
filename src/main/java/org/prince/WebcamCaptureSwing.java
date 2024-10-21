@@ -169,9 +169,9 @@ public class WebcamCaptureSwing extends JFrame {
         recording = false;
         // Add your logic to stop recording and save the video file
     }
-
-    public static void main(String[] args) {
-        nu.pattern.OpenCV.loadLocally();
-        SwingUtilities.invokeLater(WebcamCaptureSwing::new);
-    }
+//
+//    public static void main(String[] args) {
+//        nu.pattern.OpenCV.loadLocally();
+//        SwingUtilities.invokeLater(WebcamCaptureSwing::new);
+//    }
 }

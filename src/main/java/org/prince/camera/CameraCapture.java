@@ -4,11 +4,8 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-
+//import org.opencv.core.Core;
 import org.opencv.core.Mat;
-import org.opencv.core.Size;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.VideoWriter;
 import org.opencv.videoio.Videoio;
@@ -20,9 +17,11 @@ public class CameraCapture {
 	private int cameraID;
 //	private boolean isLiveFeeding = false;
 	private Mat frame = new Mat();
+//	private Mat rotatedFrame = new Mat();
 //	private LiveFeed liveFeed;
 	private boolean isRecording = false;
 	private VideoWriter videoWriter;
+	private String savedPath="";
 	
 	public CameraCapture(int cameraID, double FPS) {
 		nu.pattern.OpenCV.loadLocally();
@@ -70,6 +69,7 @@ public class CameraCapture {
 //			while(videoCapture.isOpened()) {
 //				System.out.println("reading Frame");
 				videoCapture.read(frame);
+//				Core.rotate(frame, rotatedFrame, Core.ROTATE_90_CLOCKWISE);
 				if(!frame.empty()) {
 					Image image = matToBufferedImage(frame);
 					return image;
@@ -94,17 +94,28 @@ public class CameraCapture {
     	}
     }
 	
-	public boolean recordFrames(String fileName) {
+	public boolean recordFrames(String fileName, String path) {
 		if(videoCapture.isOpened() && !isRecording) {
-			String fName = "Videos/"+fileName+".avi";
+//			String fName = "Videos/"+fileName+".avi";
+//			String fName = "src/main/resources/Videos/"+fileName+".avi";
+			String fName = path+fileName+".avi";
 			videoWriterAction(fName);
+			savedPath = fName;
 			return true;
 		}else {
 			return false;
 		}
 	}
 	
+	public String getVideoPath() {
+		return savedPath;
+	}
+	
 	private void videoWriterAction(String fileName) {
+		long stopTime = System.currentTimeMillis();
+		while(System.currentTimeMillis() - stopTime <=1000) {
+			
+		}
 		videoWriter = new VideoWriter(fileName,
 				VideoWriter.fourcc('M', 'J', 'P', 'G'),
 				25,

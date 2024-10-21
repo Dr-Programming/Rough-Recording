@@ -12,6 +12,8 @@ import org.prince.configuration.ConfigManager;
 import org.prince.configuration.Fields;
 import org.prince.properties.SampleDialog;
 
+import com.github.sarxos.webcam.Webcam;
+
 import java.awt.BorderLayout;
 import javax.swing.JPanel;
 import javax.swing.JMenuBar;
@@ -29,6 +31,7 @@ import javax.swing.JButton;
 
 import java.awt.event.ActionListener;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,9 +39,14 @@ import java.util.concurrent.Future;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.sql.Timestamp;
+
 import javax.swing.JTextField;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import javax.swing.JTextArea;
+import java.awt.FlowLayout;
+import javax.swing.JScrollPane;
 
 
 
@@ -58,11 +66,17 @@ public class ApplicationWindow {
 //	private String saveToFilePath;
 	private ConfigManager configManager;
 	private JMenu Port_Menu;
-	private int portRequest = 0;
 	private ESP32 esp32;
 	private boolean isESP32 = false;
+	private int selectedPortIndex = 20001;
+	private JTextArea console;
+//	private List<Webcam> webcams;
+//	private JMenuItem camList[];
+	int az;
+	private JMenu Camera_Menu;
+//	int aq;
+	private int camIndex = 10001;
 	private JMenuItem portList[];
-	private int selectedPortIndex;
 
 	/**
 	 * Launch the application.
@@ -101,6 +115,11 @@ public class ApplicationWindow {
 	 */
 	private void initialize() {
 		frame = new JFrame();
+		frame.setTitle("Rough recording v1");
+//		frame.setIconImage(Toolkit.getDefaultToolkit().getImage(ApplicationWindow.class.getResource("/images/diamond.png")));
+		ImageIcon icon = new ImageIcon(getClass().getResource("/images/diamond.png"));
+		frame.setIconImage(icon.getImage());
+//		frame.setIconImage(Toolkit.getDefaultToolkit().getImage());
 		frame.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
@@ -179,7 +198,7 @@ public class ApplicationWindow {
 		
 		RCode_TF = new JTextField();
 		RCode_TF.setFont(new Font("Tahoma", Font.PLAIN, 16));
-		RCode_TF.setBounds(153, 142, 220, 21);
+		RCode_TF.setBounds(153, 138, 237, 26);
 		ControlPanel_RP.add(RCode_TF);
 		RCode_TF.setColumns(10);
 		
@@ -197,6 +216,24 @@ public class ApplicationWindow {
 		sl_RecordingPanel.putConstraint(SpringLayout.EAST, ExtraPanel_RP, -10, SpringLayout.EAST, RecordingPanel);
 		ExtraPanel_RP.setBackground(Color.WHITE);
 		RecordingPanel.add(ExtraPanel_RP);
+		ExtraPanel_RP.setLayout(new BorderLayout(0, 0));
+		
+		JPanel panel_1 = new JPanel();
+		panel_1.setBackground(Color.LIGHT_GRAY);
+		FlowLayout flowLayout = (FlowLayout) panel_1.getLayout();
+		flowLayout.setAlignment(FlowLayout.LEFT);
+		ExtraPanel_RP.add(panel_1, BorderLayout.NORTH);
+		
+		JLabel lblNewLabel_2 = new JLabel("Console:");
+		lblNewLabel_2.setFont(new Font("Tahoma", Font.PLAIN, 12));
+		panel_1.add(lblNewLabel_2);
+		
+		console = new JTextArea();
+		console.setLineWrap(true);
+		console.setEditable(false);
+		JScrollPane scrollPane = new JScrollPane(console);
+		scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+		ExtraPanel_RP.add(scrollPane, BorderLayout.CENTER);
 		
 		JMenuBar menuBar = new JMenuBar();
 		frame.setJMenuBar(menuBar);
@@ -209,7 +246,7 @@ public class ApplicationWindow {
 			public void actionPerformed(ActionEvent e) {
 				System.out.println("Resotre called");
 				configManager.restoreDefaults();
-				RCode_TF.setText(configManager.getProperty("savePath"));
+//				RCode_TF.setText(configManager.getProperty("savePath"));
 			}
 		});
 		mnNewMenu.add(mntmNewMenuItem_1);
@@ -242,17 +279,28 @@ public class ApplicationWindow {
 					esp32 = new ESP32();
 					isESP32 = true;
 				}
-				if(portRequest == 0) {
-					getPortList();
-				}
+				getPortList();
 			}
 		});
 		mnNewMenu_1.add(Port_Menu);
+		
+		Camera_Menu = new JMenu("Webcams");
+		Camera_Menu.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				getCams();
+			}
+		});
+		mnNewMenu_1.add(Camera_Menu);
 	}
 	
 	private void actionButton() {
+		if(camIndex == 10001) {
+			consoleLog("Kindly select the Webcam.");
+			return;
+		}
 		if(!isLive) {
-			cameraCapture = new CameraCapture(1, 60);
+			cameraCapture = new CameraCapture(camIndex, 60);
 			boolean check = cameraCapture.initializeCamera();
 			if(!check) {
 				return;
@@ -276,6 +324,7 @@ public class ApplicationWindow {
 	}
 	
 	private void startFeed() {
+		
 		while(true) {
 			if(!cameraCapture.isCaptureOpen()) {
 				return;
@@ -287,26 +336,49 @@ public class ApplicationWindow {
 	
 	private void recordBtnAction() {
 		if(!isRecording && isLive) {
+			if(selectedPortIndex == 20001) {
+				consoleLog("Kindly select the COM PORT.");
+				return;
+			}
 			System.out.println("Starting Recording....");
 			RecordingTask recordingTask = new RecordingTask();
 			isRecording = true;
 			recordingFuture = service.submit(recordingTask);
+			consoleLog("Recording Started....");
 			ESP32Con();
 		}
 	}
 	
 	private void startRecording() {
 		if(cameraCapture.isCaptureOpen()) {
-			if(cameraCapture.recordFrames(RCode_TF.getText())) {
-				recordingFuture.cancel(true);
+			if(cameraCapture.recordFrames(RCode_TF.getText(), configManager.getProperty(Fields.savePath.toString()))) {
+				System.out.println(recordingFuture.cancel(true));
 				System.out.println("========= Recording Performed Successfully ============");
 				isRecording = false;
 			}
 		}
 	}
 	
-	int az;
 	private void getPortList() {
+//		Port_Menu.removeAll();
+//		List<String> comPortsList = esp32.getPortNameList();
+//		
+//		for(int aa = 0; aa < comPortsList.size(); aa ++) {
+//			String portName = comPortsList.get(aa);
+//			JMenuItem comPortItem = new JMenuItem(portName);
+//			
+//			int index = aa;
+//			comPortItem.addActionListener(new ActionListener() {
+//				@Override
+//				public void actionPerformed(ActionEvent e) {
+//					selectedPortIndex = index;
+//					System.out.println(portName +" is selected.");
+//					consoleLog("COM PORT : " + portName + " is SELECTED.");
+//				}
+//			});
+//			Port_Menu.add(comPortItem);
+//		}
+		
 		LinkedList<String> portNameList = esp32.getPortNameList();
 		if(!portNameList.isEmpty()) {
 			portList = null;
@@ -318,11 +390,39 @@ public class ApplicationWindow {
 					public void actionPerformed(ActionEvent e) {
 						System.out.println(portNameList.get(az-1)+ " is selected");
 						selectedPortIndex = az-1;
+						consoleLog("Com Port : "+ selectedPortIndex + " is SELECTED.");
 					}
 				});
 				Port_Menu.add(portList[az]);
 			}
 		}
+	}
+	
+	
+	private void getCams() {
+		Camera_Menu.removeAll();
+		List<Webcam> webcams = Webcam.getWebcams();
+		
+		for(int qq = 0; qq < webcams.size(); qq ++) {
+			Webcam webcam = webcams.get(qq);
+			JMenuItem webcamItem = new JMenuItem(webcam.getName());
+			
+			int index = qq;
+			webcamItem.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					camIndex = index;
+					System.out.println(webcam.getName() +" is selected.");
+					consoleLog("Webcam : " + webcam.getName() + " is SELECTED.");
+				}
+			});
+			Camera_Menu.add(webcamItem);
+		}
+	}
+	
+	private void consoleLog(String text) {
+		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+		console.append(timestamp + " -> " + text + "\n");
 	}
 	
 	private void ESP32Con() {
@@ -340,7 +440,7 @@ public class ApplicationWindow {
 	private  void getapplicationDataSession() {
 //		RCode_TF.setText(configManager.getProperty("savePath"));
 //		Fields path = Fields.savePath;
-		RCode_TF.setText(configManager.getProperty(Fields.savePath.toString()));
+//		RCode_TF.setText(configManager.getProperty(Fields.savePath.toString()));
 	}
 	
 	private void setApplicationDataSession() {
@@ -371,6 +471,7 @@ public class ApplicationWindow {
 			while(true) {
 				startRecording();
 				if(Thread.currentThread().isInterrupted()) {
+					consoleLog("Video saved at path : " + cameraCapture.getVideoPath());
 					throw new InterruptedException("Thread interrupted");
 				}
 			}

@@ -20,6 +20,7 @@ import javax.swing.JTextField;
 import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 
@@ -163,7 +164,7 @@ public class SampleDialog extends JDialog {
 		
 		int selection = fileChooser.showOpenDialog(SampleDialog.this);
 		if(selection == JFileChooser.APPROVE_OPTION) {
-			userLocation = fileChooser.getSelectedFile().getAbsolutePath();
+			userLocation = fileChooser.getSelectedFile().getAbsolutePath() + File.separator;
 			System.out.println(userLocation);
 			Restore_LB.setVisible(true);
 			settingsStatus_LB.setText("USER SETTINGS");
@@ -195,8 +196,8 @@ public class SampleDialog extends JDialog {
 		
 		SampleDialog.this.dispose();
 	}
-	
-	private void uiChnages() {
-		
-	}
+//	
+//	private void uiChnages() {
+//		
+//	}
 }

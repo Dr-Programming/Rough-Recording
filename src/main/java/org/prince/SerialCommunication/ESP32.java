@@ -1,6 +1,7 @@
 package org.prince.SerialCommunication;
 
 import java.util.LinkedList;
+import java.util.List;
 
 import com.fazecast.jSerialComm.SerialPort;
 
@@ -9,7 +10,7 @@ public class ESP32 {
 	private SerialPort[] ports;
 	private static final String COMMAND_TO_ESP = "1";
 	
-	private LinkedList<String> portNameList;
+	private List<String> portNameList;
 	
 	public ESP32(){
 		ports = SerialPort.getCommPorts();
@@ -27,7 +28,7 @@ public class ESP32 {
 	}
 
 	public LinkedList<String> getPortNameList() {
-		return portNameList;
+		return (LinkedList<String>) portNameList;
 	}
 
 	public boolean sendMessage(int portIndex){
@@ -39,6 +40,7 @@ public class ESP32 {
 	}
 	
 	private boolean sendSerialCommand(int portIndex) {
+		ports[portIndex].setBaudRate(115200);
 		if(ports[portIndex].openPort()) {
 			System.out.println("Port " + ports[portIndex].getSystemPortName() + " opened Successfully.");
 			try {

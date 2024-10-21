@@ -1,5 +1,6 @@
 package org.prince.configuration;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -7,24 +8,33 @@ import java.util.Properties;
 
 public class ConfigManager {
 	
-	private static final String USER_CONFIG_FILE = "src/main/resources/config.properties";
-	private static final String DEFAULT_CONFIG_FILE = "src/main/resources/default.properties";
+	private static String USER_CONFIG_FILE = "";
+//	private static String USER_CONFIG_FILE = "src/main/resources/config.properties";
+//	private static String DEFAULT_CONFIG_FILE = "src/main/resources/default-properties.properties";
+	private static String DEFAULT_CONFIG_FILE = "";
+	private InitialConfiguration iConfig;
 	
 	private Properties userProperties;
 	private Properties defaultProperties;
 	
 	public ConfigManager() {
+		iConfig = new InitialConfiguration();
+		propertiesPath();
 		userProperties = new Properties();
 		defaultProperties = new Properties();
 		loadDefaultProperties();
 		loadUserProperties();
 	}
 	
+	private void propertiesPath() {
+		USER_CONFIG_FILE = iConfig.getConfigPropertiesPath() + File.separator + "user-properties.properties";
+		DEFAULT_CONFIG_FILE = iConfig.getConfigPropertiesPath() + File.separator + "default-properties.properties";
+	}
+	
 	private void loadUserProperties() {
 		try(FileInputStream input = new FileInputStream(USER_CONFIG_FILE)){
 			userProperties.load(input);
 		} catch (IOException e) {
-//			System.out.println("No exsiting configuration found. A new one will be created.");
 			System.out.println("No exsiting configuration found. Default Setting will be loaded.");
 			userProperties.putAll(defaultProperties);
 		}
@@ -34,7 +44,20 @@ public class ConfigManager {
 		try(FileInputStream input = new FileInputStream(DEFAULT_CONFIG_FILE)){
 			defaultProperties.load(input);
 		} catch (IOException e) {
-			System.out.println("Unable to load Deafult Properties....");
+			System.out.println("Unable to load Deafult Properties....\nCreating new Default file.");
+			makeDefaultPropertiesFile();
+		}
+	}
+	
+	private void makeDefaultPropertiesFile() {
+		Properties properties = new Properties();
+		properties.setProperty("CHANGE", "FALSE");
+		properties.setProperty("savePath", iConfig.getSavePath());
+		try(FileOutputStream output = new FileOutputStream(DEFAULT_CONFIG_FILE)){
+			properties.store(output, "Deafult Configuration");
+			loadDefaultProperties();
+		}catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	
