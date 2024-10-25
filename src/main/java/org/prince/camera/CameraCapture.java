@@ -3,31 +3,37 @@ package org.prince.camera;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
+import java.io.File;
 
-//import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.VideoWriter;
 import org.opencv.videoio.Videoio;
 
 public class CameraCapture {
 	
-	private VideoCapture videoCapture;
-	private double FPS;
-	private int cameraID;
-//	private boolean isLiveFeeding = false;
-	private Mat frame = new Mat();
-//	private Mat rotatedFrame = new Mat();
-//	private LiveFeed liveFeed;
 	private boolean isRecording = false;
-	private VideoWriter videoWriter;
+	
+	private double FPS;
+	
+	private int cameraID;
+	
 	private String savedPath="";
 	
+	private Mat frame = new Mat();
+	
+	private VideoCapture videoCapture;
+	
+	private VideoWriter videoWriter;
+	
+
 	public CameraCapture(int cameraID, double FPS) {
 		nu.pattern.OpenCV.loadLocally();
 		this.cameraID = cameraID;
 		this.FPS = FPS;
-//		liveFeed = new LiveFeed();
 	}
 	
 	public CameraCapture() {
@@ -58,29 +64,16 @@ public class CameraCapture {
 	}
 	
 	public Image getLiveFeed() {
-//		if(!isLiveFeeding) {
-//			videoCapture.open(cameraID);
-//			liveFeed.startFeed(this.videoCapture, videoLabel);
-//			if(!videoCapture.isOpened()) {
-//				videoCapture.open(cameraID);
-//				System.out.println("Camera is opened");
-//			}
-			
-//			while(videoCapture.isOpened()) {
-//				System.out.println("reading Frame");
-				videoCapture.read(frame);
+		videoCapture.read(frame);
 //				Core.rotate(frame, rotatedFrame, Core.ROTATE_90_CLOCKWISE);
-				if(!frame.empty()) {
-					Image image = matToBufferedImage(frame);
-					return image;
-				}else {
-					return null;
-				}
-//			}
-//		}else {
-//			
-//		}
+		if(!frame.empty()) {
+			Image image = matToBufferedImage(frame);
+			return image;
+		}else {
+			return null;
+		}
 	}
+	
 	public VideoCapture getVideoCapture() {
 		System.out.println("video capture sent");
 		return videoCapture;
@@ -94,12 +87,10 @@ public class CameraCapture {
     	}
     }
 	
-	public boolean recordFrames(String fileName, String path) {
+	public boolean recordFrames(String path, String weight) {
 		if(videoCapture.isOpened() && !isRecording) {
-//			String fName = "Videos/"+fileName+".avi";
-//			String fName = "src/main/resources/Videos/"+fileName+".avi";
-			String fName = path+fileName+".avi";
-			videoWriterAction(fName);
+			String fName = path + File.separator + weight +" cts.avi";
+			videoWriterAction(fName, weight);
 			savedPath = fName;
 			return true;
 		}else {
@@ -111,7 +102,7 @@ public class CameraCapture {
 		return savedPath;
 	}
 	
-	private void videoWriterAction(String fileName) {
+	private void videoWriterAction(String fileName, String weight) {
 		long stopTime = System.currentTimeMillis();
 		while(System.currentTimeMillis() - stopTime <=1000) {
 			
@@ -126,6 +117,15 @@ public class CameraCapture {
 		while(System.currentTimeMillis() - startTime <= 10000) {
 			System.out.println(java.time.LocalTime.now());
 			if(videoCapture.read(videoFrame)) {
+				//adding text
+				Imgproc.putText(videoFrame, 
+						weight + " cts", 
+						new Point(videoCapture.get(Videoio.CAP_PROP_FRAME_WIDTH)-300, 100), 
+						Imgproc.FONT_HERSHEY_SIMPLEX,
+						1.0, 
+						new Scalar(255, 255, 255),
+						2);
+				
 				videoWriter.write(videoFrame);
 			}
 		}

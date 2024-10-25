@@ -4,11 +4,14 @@ import java.io.File;
 
 class InitialConfiguration {
 	
-	private String userHomeDir;
-	private String deafultSavePath;
 	private static final String HOME_PORPERTY = "user.home";
 	private static final String MASTER_FOLDER_NAME = "Rough-Recording";
+	
 	private static String DEAFULT_DIRECTORY;
+	
+	private String deafultSavePath;
+	private String userHomeDir;
+
 	private File defDir;
 	private File saveDir;
 	
@@ -46,18 +49,4 @@ class InitialConfiguration {
 		}
 		return file.getAbsolutePath();
 	}
-	
-	
-//	public static void main(String[] args) {
-//		
-//		String userHome = System.getProperty("user.home");
-//		String defualtPath = userHome + File.separator + "Rough-recording-Videos";
-//		File dir = new File(defualtPath);
-//		if(!dir.exists()) {
-//			dir.mkdir();
-//		}
-//		
-//		String path = dir.getAbsolutePath();
-//		System.out.println("Created Path : "+ path);
-//	}
 }

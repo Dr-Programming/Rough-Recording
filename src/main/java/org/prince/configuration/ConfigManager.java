@@ -8,14 +8,14 @@ import java.util.Properties;
 
 public class ConfigManager {
 	
-	private static String USER_CONFIG_FILE = "";
-//	private static String USER_CONFIG_FILE = "src/main/resources/config.properties";
-//	private static String DEFAULT_CONFIG_FILE = "src/main/resources/default-properties.properties";
 	private static String DEFAULT_CONFIG_FILE = "";
+	private static String USER_CONFIG_FILE = "";
+	
+	private Properties defaultProperties;
+	private Properties userProperties;
+	
 	private InitialConfiguration iConfig;
 	
-	private Properties userProperties;
-	private Properties defaultProperties;
 	
 	public ConfigManager() {
 		iConfig = new InitialConfiguration();

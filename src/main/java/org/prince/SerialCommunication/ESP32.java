@@ -7,22 +7,24 @@ import com.fazecast.jSerialComm.SerialPort;
 
 public class ESP32 {
 	
-	private SerialPort[] ports;
 	private static final String COMMAND_TO_ESP = "1";
 	
 	private List<String> portNameList;
+	
+	private SerialPort[] ports;
+
 	
 	public ESP32(){
 		ports = SerialPort.getCommPorts();
 		ini();
 	}
 	
+	
 	private void ini() {
 		if(ports != null && ports.length>0) {
 			portNameList = new LinkedList<String>();
 			for(SerialPort port : ports) {
 				portNameList.add(port.getSystemPortName()+ " - " + port.getDescriptivePortName());
-//				System.out.println(port.getSystemPortName()+ " - " + port.getDescriptivePortName());
 			}
 		}
 	}

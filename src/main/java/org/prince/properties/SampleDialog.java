@@ -1,53 +1,44 @@
 package org.prince.properties;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
 import org.prince.configuration.ConfigManager;
 import org.prince.configuration.Fields;
 
-import java.awt.Color;
-import javax.swing.JLabel;
-import java.awt.Font;
-import javax.swing.JTextField;
-import java.awt.Cursor;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.File;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
-
 public class SampleDialog extends JDialog {
 
 	private static final long serialVersionUID = 1L;
 	private final JPanel contentPanel = new JPanel();
-	private JTextField txtSample;
-	private JLabel Restore_LB;
+	
+	private JButton saveButton;
+	
+	private JLabel restoreDefaultLabel;
 	private JLabel settingsStatus_LB;
-	private JButton okButton;
+	
+	private JTextField showPathTF;
+	
 	private boolean isChange = false;
 	private boolean isDefault = true;
+	
 	private String userLocation;
-
-	/**
-	 * Launch the application.
-	 */
-//	public static void main(String[] args) {
-//		try {
-//			SampleDialog dialog = new SampleDialog();
-//			dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-//			dialog.setVisible(true);
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//	}
 
 	/**
 	 * Create the dialog.
@@ -67,72 +58,72 @@ public class SampleDialog extends JDialog {
 		contentPanel.setLayout(null);
 		userLocation = configManager.getProperty(Fields.savePath.toString());
 		
-		JLabel lblNewLabel = new JLabel("Current Settings :");
-		lblNewLabel.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		lblNewLabel.setBounds(31, 37, 109, 17);
-		contentPanel.add(lblNewLabel);
+		JLabel infoLabel_1 = new JLabel("Current Settings :");
+		infoLabel_1.setFont(new Font("Tahoma", Font.PLAIN, 14));
+		infoLabel_1.setBounds(31, 37, 109, 17);
+		contentPanel.add(infoLabel_1);
 		
 		settingsStatus_LB = new JLabel("DEFAULT SETTINGS");
 		settingsStatus_LB.setFont(new Font("Monospaced", Font.BOLD, 18));
 		settingsStatus_LB.setBounds(150, 37, 256, 17);
 		contentPanel.add(settingsStatus_LB);
 		
-		JLabel lblNewLabel_2 = new JLabel("Video Save To :");
-		lblNewLabel_2.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		lblNewLabel_2.setBounds(44, 87, 96, 17);
-		contentPanel.add(lblNewLabel_2);
+		JLabel inputLabel_1 = new JLabel("Video Save To :");
+		inputLabel_1.setFont(new Font("Tahoma", Font.PLAIN, 14));
+		inputLabel_1.setBounds(44, 87, 96, 17);
+		contentPanel.add(inputLabel_1);
 		
-		txtSample = new JTextField();
-		txtSample.setFocusTraversalKeysEnabled(false);
-		txtSample.setFont(new Font("Monospaced", Font.PLAIN, 15));
-		txtSample.setBackground(Color.WHITE);
-		txtSample.setEditable(false);
-		txtSample.setText(userLocation);
-		txtSample.setBounds(150, 82, 295, 27);
-		contentPanel.add(txtSample);
-		txtSample.setColumns(10);
+		showPathTF = new JTextField();
+		showPathTF.setFocusTraversalKeysEnabled(false);
+		showPathTF.setFont(new Font("Monospaced", Font.PLAIN, 15));
+		showPathTF.setBackground(Color.WHITE);
+		showPathTF.setEditable(false);
+		showPathTF.setText(userLocation);
+		showPathTF.setBounds(150, 82, 295, 27);
+		contentPanel.add(showPathTF);
+		showPathTF.setColumns(10);
 		
-		JLabel lblNewLabel_3 = new JLabel("Choose Location");
-		lblNewLabel_3.addMouseListener(new MouseAdapter() {
+		JLabel chooseLocationLabel = new JLabel("Choose Location");
+		chooseLocationLabel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				saveFilePathSelection();
 			}
 		});
-		lblNewLabel_3.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		lblNewLabel_3.setFont(new Font("Tahoma", Font.PLAIN, 11));
-		lblNewLabel_3.setBounds(150, 112, 96, 14);
-		contentPanel.add(lblNewLabel_3);
+		chooseLocationLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		chooseLocationLabel.setFont(new Font("Tahoma", Font.PLAIN, 11));
+		chooseLocationLabel.setBounds(150, 112, 96, 14);
+		contentPanel.add(chooseLocationLabel);
 		
-		Restore_LB = new JLabel("Restore Defaults ?");
-		Restore_LB.addMouseListener(new MouseAdapter() {
+		restoreDefaultLabel = new JLabel("Restore Defaults ?");
+		restoreDefaultLabel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				restoreDefaults(configManager);
 			}
 		});
-		Restore_LB.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		Restore_LB.setFont(new Font("Tahoma", Font.ITALIC, 12));
-		Restore_LB.setBounds(336, 137, 109, 14);
-		Restore_LB.setVisible(false);
-		contentPanel.add(Restore_LB);
+		restoreDefaultLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		restoreDefaultLabel.setFont(new Font("Tahoma", Font.ITALIC, 12));
+		restoreDefaultLabel.setBounds(336, 137, 109, 14);
+		restoreDefaultLabel.setVisible(false);
+		contentPanel.add(restoreDefaultLabel);
 		{
 			JPanel buttonPane = new JPanel();
 			buttonPane.setLayout(new FlowLayout(FlowLayout.RIGHT));
 			getContentPane().add(buttonPane, BorderLayout.SOUTH);
 			{
-				okButton = new JButton("Save");
-				okButton.addActionListener(new ActionListener() {
+				saveButton = new JButton("Save");
+				saveButton.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						saveSettings(configManager);
 					}
 				});
-				okButton.setFocusPainted(false);
-				okButton.setActionCommand("OK");
-				okButton.setFocusable(false);
-				okButton.setVisible(isChange);
-				buttonPane.add(okButton);
-				getRootPane().setDefaultButton(okButton);
+				saveButton.setFocusPainted(false);
+				saveButton.setActionCommand("OK");
+				saveButton.setFocusable(false);
+				saveButton.setVisible(isChange);
+				buttonPane.add(saveButton);
+				getRootPane().setDefaultButton(saveButton);
 			}
 			{
 				JButton cancelButton = new JButton("Cancel");
@@ -151,7 +142,7 @@ public class SampleDialog extends JDialog {
 		}
 		
 		if(configManager.getProperty(Fields.CHANGE.toString()).equals("TRUE")) {
-			Restore_LB.setVisible(true);
+			restoreDefaultLabel.setVisible(true);
 			settingsStatus_LB.setText("USER SETTINGS");
 			isDefault = false;
 		}
@@ -166,12 +157,12 @@ public class SampleDialog extends JDialog {
 		if(selection == JFileChooser.APPROVE_OPTION) {
 			userLocation = fileChooser.getSelectedFile().getAbsolutePath() + File.separator;
 			System.out.println(userLocation);
-			Restore_LB.setVisible(true);
+			restoreDefaultLabel.setVisible(true);
 			settingsStatus_LB.setText("USER SETTINGS");
-			txtSample.setText(userLocation);
+			showPathTF.setText(userLocation);
 			isChange = true;
 			isDefault = false;
-			okButton.setVisible(isChange);
+			saveButton.setVisible(isChange);
 		}
 	}
 	
@@ -179,10 +170,10 @@ public class SampleDialog extends JDialog {
 		isChange = true;
 		settingsStatus_LB.setText("DEFAULT SETTINGS");
 		configManager.restoreDefaults();
-		txtSample.setText(configManager.getProperty(Fields.savePath.toString()));
-		Restore_LB.setVisible(false);
+		showPathTF.setText(configManager.getProperty(Fields.savePath.toString()));
+		restoreDefaultLabel.setVisible(false);
 		isDefault = true;
-		okButton.setVisible(isChange);
+		saveButton.setVisible(isChange);
 	}
 	
 	private void saveSettings(ConfigManager configManager) {
