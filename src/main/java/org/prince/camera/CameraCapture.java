@@ -121,10 +121,10 @@ public class CameraCapture {
 				Imgproc.putText(videoFrame, 
 						weight + " cts", 
 						new Point(videoCapture.get(Videoio.CAP_PROP_FRAME_WIDTH)-300, 100), 
-						Imgproc.FONT_HERSHEY_SIMPLEX,
-						1.0, 
+						Imgproc.FONT_HERSHEY_PLAIN,
+						3.0, 
 						new Scalar(255, 255, 255),
-						2);
+						3);
 				
 				videoWriter.write(videoFrame);
 			}

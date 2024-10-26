@@ -58,6 +58,7 @@ import org.prince.inputs.BorderType;
 import org.prince.inputs.InputManager;
 import org.prince.properties.SampleDialog;
 import org.prince.search.SamplePanel;
+import org.prince.video.VideoFormatConvert;
 
 import com.github.sarxos.webcam.Webcam;
 
@@ -97,6 +98,7 @@ public class ApplicationWindow {
 	
 	private Future<?> FeedingFuture;
 	private Future<?> recordingFuture;
+	private Future<?> videoConvertingFuture;
 	
 	private boolean isRecording = false;
 	private boolean isESP32 = false;
@@ -722,9 +724,9 @@ public class ApplicationWindow {
 			if(cameraCapture.recordFrames(saveToPathOfVideo, weightTF_RP.getText())) {
 				System.out.println(recordingFuture.cancel(true));
 				System.out.println("========= Recording Performed Successfully ============");
-				isRecording = false;
-				recordingBtn_RP.setText("Start Recording");
-				recordingBtn_RP.setEnabled(true);
+				VideoConvertingTask videoConvertingTask = new VideoConvertingTask();
+				videoConvertingFuture = service.submit(videoConvertingTask);
+				recordingBtn_RP.setText("Converting Video");
 			}
 		}
 	}
@@ -794,6 +796,22 @@ public class ApplicationWindow {
 		esp32.sendMessage(selectedPortIndex);
 	}
 	
+	private void avi4mp4() {
+		VideoFormatConvert converter = new VideoFormatConvert(console_RP);
+		if(converter != null) {
+			if(converter.convertingMethod(saveToPathOfVideo, weightTF_RP.getText())) {
+				consoleLog("Video Converted Successfully.");
+				videoConvertingFuture.cancel(true);
+			}else {
+				consoleLog("Failed to convert the Video.");
+				videoConvertingFuture.cancel(true);
+			}
+			isRecording = false;
+			recordingBtn_RP.setText("Start Recording");
+			recordingBtn_RP.setEnabled(true);
+		}
+	}
+	
 	private void getResourcesReleased() {
 		if(cameraCapture != null) {
 			cameraCapture.releaseResources();
@@ -831,5 +849,20 @@ public class ApplicationWindow {
 				}
 			}
 		}
+	}
+	
+	private class VideoConvertingTask implements Callable<Void>{
+
+		@Override
+		public Void call() throws Exception {
+			while(true) {
+				avi4mp4();
+				if(Thread.currentThread().isInterrupted()) {
+					consoleLog("Converted Video Saved to same path.");
+					throw new InterruptedException("Thread interrupted");
+				}
+			}
+		}
+		
 	}
 }
