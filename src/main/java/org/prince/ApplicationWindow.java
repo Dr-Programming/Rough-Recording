@@ -57,10 +57,11 @@ import org.prince.files.FilesManager;
 import org.prince.inputs.BorderType;
 import org.prince.inputs.InputManager;
 import org.prince.properties.SampleDialog;
-import org.prince.search.SamplePanel;
+import org.prince.search.SearchPanel;
 import org.prince.video.VideoFormatConvert;
 
 import com.github.sarxos.webcam.Webcam;
+import javax.swing.JCheckBox;
 
 
 
@@ -118,6 +119,7 @@ public class ApplicationWindow {
 	private ESP32 esp32;
 	
 	private FilesManager filesManager;
+	private JCheckBox convertCB_RP;
 
 	
 	
@@ -273,7 +275,7 @@ public class ApplicationWindow {
 			}
 		});
 		recordingBtn_RP.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		recordingBtn_RP.setBounds(225, 430, 146, 31);
+		recordingBtn_RP.setBounds(227, 477, 146, 31);
 		ControlPanel_RP.add(recordingBtn_RP);
 		
 		JLabel infoLabel_1_RP = new JLabel("Camera :");
@@ -499,6 +501,15 @@ public class ApplicationWindow {
 		dCodeButtonGroup.add(dCodeNoRB_RP);
 		dCodeNoRB_RP.setSelected(true);
 		
+		convertCB_RP = new JCheckBox("Convert the video into MP4 format, and save both the files.");
+		convertCB_RP.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		convertCB_RP.setIconTextGap(5);
+		convertCB_RP.setHorizontalAlignment(SwingConstants.CENTER);
+		convertCB_RP.setFont(new Font("Tahoma", Font.PLAIN, 15));
+		convertCB_RP.setBackground(Color.WHITE);
+		convertCB_RP.setBounds(96, 430, 417, 23);
+		ControlPanel_RP.add(convertCB_RP);
+		
 		dCodeYesRB_RP.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if(dCodeTF_RP.getText().equals("")) {
@@ -563,13 +574,13 @@ public class ApplicationWindow {
 		});
 		viewMenu.add(recordingViewMenuItem);
 		
-		SamplePanel sPanel = new SamplePanel();
+		SearchPanel searchPanel = new SearchPanel();
 		
 		JMenuItem searchViewMenuItem = new JMenuItem("Search View");
 		searchViewMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				masterPanel.removeAll();
-				masterPanel.add(sPanel);
+				masterPanel.add(searchPanel);
 				masterPanel.repaint();
 				masterPanel.revalidate();
 			}
@@ -724,9 +735,15 @@ public class ApplicationWindow {
 			if(cameraCapture.recordFrames(saveToPathOfVideo, weightTF_RP.getText())) {
 				System.out.println(recordingFuture.cancel(true));
 				System.out.println("========= Recording Performed Successfully ============");
-				VideoConvertingTask videoConvertingTask = new VideoConvertingTask();
-				videoConvertingFuture = service.submit(videoConvertingTask);
-				recordingBtn_RP.setText("Converting Video");
+				if(convertCB_RP.isSelected()) {
+					VideoConvertingTask videoConvertingTask = new VideoConvertingTask();
+					videoConvertingFuture = service.submit(videoConvertingTask);
+					recordingBtn_RP.setText("Converting Video");
+				}else {
+					isRecording = false;
+					recordingBtn_RP.setText("Start Recording");
+					recordingBtn_RP.setEnabled(true);
+				}
 			}
 		}
 	}
@@ -757,8 +774,7 @@ public class ApplicationWindow {
 				comPortMenu.add(portList[az]);
 			}
 		}
-	}
-	
+	}	
 	
 	private void getCams() {
 		cameraMenu.removeAll();
@@ -809,6 +825,7 @@ public class ApplicationWindow {
 			isRecording = false;
 			recordingBtn_RP.setText("Start Recording");
 			recordingBtn_RP.setEnabled(true);
+			convertCB_RP.setSelected(false);
 		}
 	}
 	
