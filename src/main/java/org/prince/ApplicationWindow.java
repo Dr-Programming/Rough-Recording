@@ -56,7 +56,7 @@ import org.prince.configuration.ConfigManager;
 import org.prince.files.FilesManager;
 import org.prince.inputs.BorderType;
 import org.prince.inputs.InputManager;
-import org.prince.properties.SampleDialog;
+import org.prince.properties.SaveLocationDialog;
 import org.prince.search.SearchPanel;
 import org.prince.video.VideoFormatConvert;
 
@@ -71,6 +71,8 @@ public class ApplicationWindow {
 	
 	private JButton startFeedBtn_RP;
 	private JButton recordingBtn_RP;
+	
+	private JCheckBox convertCB_RP;
 	
 	private JLabel VideoLabel_RP;
 	private JLabel caratsLabel_RP;
@@ -119,7 +121,6 @@ public class ApplicationWindow {
 	private ESP32 esp32;
 	
 	private FilesManager filesManager;
-	private JCheckBox convertCB_RP;
 
 	
 	
@@ -161,7 +162,7 @@ public class ApplicationWindow {
 	private void initialize() {
 		frame = new JFrame();
 		frame.setTitle("SparkleDi v1");
-		ImageIcon icon = new ImageIcon(getClass().getResource("/images/diamond.png"));
+		ImageIcon icon = new ImageIcon(getClass().getResource("/images/BlueDiamondLogo.png"));
 		frame.setIconImage(icon.getImage());
 		frame.addWindowListener(new WindowAdapter() {
 			@Override
@@ -256,7 +257,14 @@ public class ApplicationWindow {
 		dCodeTF_RP.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyTyped(KeyEvent e) {
-				if(e.getKeyChar() == ' ') {
+				char c = e.getKeyChar();
+				if(!Character.isDigit(c) && c != '.' ) {
+					e.consume();
+				}
+				if( c != KeyEvent.VK_BACK_SPACE && c ==' ') {
+					e.consume();
+				}
+				if(c == '.' && dCodeTF_RP.getText().contains(".")) {
 					e.consume();
 				}
 			}
@@ -269,6 +277,7 @@ public class ApplicationWindow {
 		dCodeTF_RP.setColumns(10);
 		
 		recordingBtn_RP = new JButton("Start Recording");
+		recordingBtn_RP.setFocusPainted(false);
 		recordingBtn_RP.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				recordBtnAction();
@@ -364,7 +373,14 @@ public class ApplicationWindow {
 		karpanTF_RP.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyTyped(KeyEvent e) {
-				if(e.getKeyChar() == ' ') {
+				char c = e.getKeyChar();
+				if(!Character.isDigit(c) && c != '.' ) {
+					e.consume();
+				}
+				if( c != KeyEvent.VK_BACK_SPACE && c ==' ') {
+					e.consume();
+				}
+				if(c == '.' && karpanTF_RP.getText().contains(".")) {
 					e.consume();
 				}
 			}
@@ -385,6 +401,21 @@ public class ApplicationWindow {
 		ControlPanel_RP.add(inputLabel_3_RP);
 		
 		weightTF_RP = new JTextField();
+		weightTF_RP.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyTyped(KeyEvent e) {
+				char c = e.getKeyChar();
+				if(!Character.isDigit(c) && c != '.' ) {
+					e.consume();
+				}
+				if( c != KeyEvent.VK_BACK_SPACE && c ==' ') {
+					e.consume();
+				}
+				if(c == '.' && weightTF_RP.getText().contains(".")) {
+					e.consume();
+				}
+			}
+		});
 		weightTF_RP.setBorder(
 				new CompoundBorder(
 						(MatteBorder) new InputManager().getCustomMatteBorder(1, 1, 1, 0, BorderType.DEFAULT),
@@ -540,10 +571,10 @@ public class ApplicationWindow {
 		fl_headingPanel_2_RP.setAlignment(FlowLayout.LEFT);
 		ExtraPanel_RP.add(headingPanel_2_RP, BorderLayout.NORTH);
 		
-		JLabel infoLabel_RP = new JLabel("Console:");
-		infoLabel_RP.setForeground(new Color(255, 255, 255));
-		infoLabel_RP.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		headingPanel_2_RP.add(infoLabel_RP);
+		JLabel infoLabel_4_RP = new JLabel("Console:");
+		infoLabel_4_RP.setForeground(new Color(255, 255, 255));
+		infoLabel_4_RP.setFont(new Font("Tahoma", Font.PLAIN, 12));
+		headingPanel_2_RP.add(infoLabel_4_RP);
 		
 		console_RP = new JTextArea();
 		console_RP.setSelectionColor(new Color(192, 192, 192));
@@ -563,9 +594,12 @@ public class ApplicationWindow {
 		JMenu viewMenu = new JMenu("View");
 		menuBar.add(viewMenu);
 		
+		SearchPanel searchPanel = new SearchPanel(configManager);
+		
 		JMenuItem recordingViewMenuItem = new JMenuItem("Recording View");
 		recordingViewMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				console_RP.setText(searchPanel.releaseResources());
 				masterPanel.removeAll();
 				masterPanel.add(recordingPanel);
 				masterPanel.repaint();
@@ -574,13 +608,12 @@ public class ApplicationWindow {
 		});
 		viewMenu.add(recordingViewMenuItem);
 		
-		SearchPanel searchPanel = new SearchPanel();
-		
 		JMenuItem searchViewMenuItem = new JMenuItem("Search View");
 		searchViewMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				masterPanel.removeAll();
 				masterPanel.add(searchPanel);
+				searchPanel.setConsoleData(recordingResourceRelease());
 				masterPanel.repaint();
 				masterPanel.revalidate();
 			}
@@ -591,7 +624,14 @@ public class ApplicationWindow {
 		menuBar.add(propertiesMenu);
 		
 		JMenuItem saveLocationMenuItem = new JMenuItem("Save Location");
-		saveLocationMenuItem.addActionListener( e -> new SampleDialog(frame, configManager).setVisible(true));
+		saveLocationMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SaveLocationDialog dialog = new SaveLocationDialog(frame, configManager);
+				dialog.setVisible(true);
+				consoleLog(dialog.getChoosenPath());
+			}
+		});
+		
 		propertiesMenu.add(saveLocationMenuItem);
 		
 		comPortMenu = new JMenu("COM PORTS");
@@ -647,6 +687,7 @@ public class ApplicationWindow {
 			if(cameraCapture.releaseResources()) {
 				System.out.println("resourses released");
 			}
+			cameraCapture.releaseResources();
 			cameraCapture = null;
 			VideoLabel_RP.setIcon(null);
 			VideoLabel_RP.setText("Camera Not Connected");
@@ -827,6 +868,23 @@ public class ApplicationWindow {
 			recordingBtn_RP.setEnabled(true);
 			convertCB_RP.setSelected(false);
 		}
+	}
+	
+	private String recordingResourceRelease() {
+		if(isLive) {
+			actionButton();
+		}
+		connStatusTF_RP.setText("");
+		convertCB_RP.setSelected(false);
+		dCodeTF_RP.setText("");
+		dCodeYesRB_RP.setSelected(false);
+		karpanTF_RP.setText("");
+		karpanYesRB_RP.setSelected(false);
+		weightTF_RP.setText("");
+		consoleLog("Recording resources released.");
+		String data = console_RP.getText();
+		console_RP.setText("");
+		return data;
 	}
 	
 	private void getResourcesReleased() {

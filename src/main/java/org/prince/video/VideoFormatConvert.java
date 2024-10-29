@@ -17,14 +17,18 @@ public class VideoFormatConvert {
 		
 		String inputPath = "\"" + path + File.separator + fileName + " cts.avi\"";
 		String outputPath = "\"" + path + File.separator + fileName + " cts.mp4\"";
+		
 		String consoleData = console.getText();
+		
 		String ffmpegCommand = String.format("ffmpeg -i %s -c:v libx264 -crf 15 -preset medium -tune film -pix_fmt yuv420p %s", inputPath, outputPath);
 		System.out.println("Command sent : " + ffmpegCommand);
+		
 		console.setText("Starting the conversion....\n");
 		console.append(ffmpegCommand + "\n");
 		
 		ProcessBuilder builder = new ProcessBuilder(ffmpegCommand.split(" "));
 		builder.inheritIO();
+		
 		try {
 			Process process = builder.start();
 			

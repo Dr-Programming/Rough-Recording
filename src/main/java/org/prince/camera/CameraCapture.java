@@ -185,7 +185,7 @@ public class CameraCapture {
         }
         int bufferSize = mat.channels() * mat.cols() * mat.rows();
         byte[] b = new byte[bufferSize];
-        mat.get(0, 0, b);  // Get all the pixels
+        mat.get(0, 0, b);
         BufferedImage image = new BufferedImage(mat.cols(), mat.rows(), type);
         final byte[] targetPixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
         System.arraycopy(b, 0, targetPixels, 0, b.length);

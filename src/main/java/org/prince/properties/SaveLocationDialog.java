@@ -23,7 +23,7 @@ import javax.swing.border.EmptyBorder;
 import org.prince.configuration.ConfigManager;
 import org.prince.configuration.Fields;
 
-public class SampleDialog extends JDialog {
+public class SaveLocationDialog extends JDialog {
 
 	private static final long serialVersionUID = 1L;
 	private final JPanel contentPanel = new JPanel();
@@ -43,7 +43,7 @@ public class SampleDialog extends JDialog {
 	/**
 	 * Create the dialog.
 	 */
-	public SampleDialog(JFrame parent, ConfigManager configManager) {
+	public SaveLocationDialog(JFrame parent, ConfigManager configManager) {
 		setTitle("Settings");
 		setResizable(false);
 		setBounds(100, 100, 505, 264);
@@ -132,7 +132,7 @@ public class SampleDialog extends JDialog {
 						configManager.setProperty(Fields.savePath.toString(), userLocation);
 						configManager.setProperty(Fields.CHANGE.toString(), "TRUE");
 						configManager.saveUserProperties();
-						SampleDialog.this.dispose();
+						SaveLocationDialog.this.dispose();
 					}
 				});
 				cancelButton.setFocusPainted(false);
@@ -153,7 +153,7 @@ public class SampleDialog extends JDialog {
 		fileChooser.setDialogTitle("Select Save Location");
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		
-		int selection = fileChooser.showOpenDialog(SampleDialog.this);
+		int selection = fileChooser.showOpenDialog(SaveLocationDialog.this);
 		if(selection == JFileChooser.APPROVE_OPTION) {
 			userLocation = fileChooser.getSelectedFile().getAbsolutePath() + File.separator;
 			System.out.println(userLocation);
@@ -185,10 +185,14 @@ public class SampleDialog extends JDialog {
 			configManager.saveUserProperties();
 		}
 		
-		SampleDialog.this.dispose();
+		SaveLocationDialog.this.dispose();
 	}
-//	
-//	private void uiChnages() {
-//		
-//	}
+	
+	public String getChoosenPath() {
+		if(isDefault) {
+			return "Files save location set to Default Path.";
+		}else {
+			return "Files save location set to " + userLocation + " .";
+		}
+	}
 }
