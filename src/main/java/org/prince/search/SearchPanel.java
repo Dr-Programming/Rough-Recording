@@ -1,5 +1,6 @@
 // This sample panel is currently being developed.
-// And this is a Stable version which is used in the application.
+// And this is a Stable version-2 which is used in the application.
+// This version supports the viewing of video files with '.avi' extension using JavaCV
 // 1500 x 988
 
 package org.prince.search;
@@ -9,7 +10,7 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.Image;
+import java.awt.Graphics2D;
 import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -19,8 +20,9 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.sql.Timestamp;
 import java.util.concurrent.Callable;
@@ -44,8 +46,9 @@ import javax.swing.border.MatteBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 
-import org.opencv.core.Mat;
-import org.opencv.videoio.VideoCapture;
+import org.bytedeco.javacv.FFmpegFrameGrabber;
+import org.bytedeco.javacv.Frame;
+import org.bytedeco.javacv.Java2DFrameConverter;
 import org.prince.configuration.ConfigManager;
 import org.prince.inputs.InputManager;
 
@@ -73,18 +76,14 @@ public class SearchPanel extends JPanel {
 	private volatile boolean isPlaying = false;
 	private volatile boolean forceStop = false;
 	
-	private BufferedImage image;
 	
 	private ExecutorService service = Executors.newCachedThreadPool();
 	
 	private Future<?> videoFuture;
 
 	private ConfigManager configManager;
-
-	private VideoCapture cap;
 	
 	
-
 	/**
 	 * Create the panel.
 	 */
@@ -290,7 +289,7 @@ public class SearchPanel extends JPanel {
 					if(row != -1) {
 						String fileName = (String) tableModel.getValueAt(row, 0);
 						JOptionPane.showMessageDialog(SearchPanel.this, "File: "+ fileName + " is SELECTED.");
-						playVideo(fileName);
+						loadVideo(fileName);
 					}
 				}
 			}
@@ -343,7 +342,7 @@ public class SearchPanel extends JPanel {
 		if(folder.isDirectory()) {
 			tableModel.setRowCount(0);
 			
-			File[] files = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".mp4"));
+			File[] files = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".avi"));
 			if(files != null) {
 				infoTF_1_SP.setText(files.length + " Files Found.");
 				for(File file : files) {
@@ -362,88 +361,131 @@ public class SearchPanel extends JPanel {
 		}
 	}
 	
-	private void playVideo(String fileName) {
+	private void loadVideo(String fileName) {
 		if(isPlaying) {
 			forceStop = true;
 			try {
 				Thread.sleep(500);
-			} catch (InterruptedException e) {
+			}catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
-		videoPath = directoryPath + File.separator + fileName;
-		cap = new VideoCapture(videoPath);
+		videoPath = (directoryPath + File.separator + fileName).toString();
 		VideoTask videoTask = new VideoTask();
 		videoFuture = service.submit(videoTask);
 		isPlaying = true;
-		System.out.println("future started at " + fileName);
-		consoleLog("Playing " + fileName + " File.");
+		System.out.println("Future Started at : "+ fileName);
+		consoleLog("Playing "+ fileName + " File.");
 	}
 	
-	private void loadVideo() {
-		if (!cap.isOpened()) {
-            JOptionPane.showMessageDialog(this, "Error opening video file. Please check the file path.", "Error", JOptionPane.ERROR_MESSAGE);
-            System.out.println("Error opening video file");
-            consoleLog("Error Opening the above File.");
-            return;
-        }
-		
-		Mat frame = new Mat();
-		cap.open(videoPath);
-		 while (cap.read(frame)) {
-			 if(forceStop) {
-				 System.out.println("ForceFully canceling the future at path: "+ videoPath);
-				 isPlaying = false;
-				 forceStop = false;
-				 videoFuture.cancel(true);
-				 cap.release();
-				 return;
-			 }
-             int labelWidth = videoLabel_SP.getWidth();
-             int labelHeight = videoLabel_SP.getHeight();
-             image = matToBufferedImage(frame);
-             double aspectRatio = (double) image.getWidth() / image.getHeight();
-             
-             int newWidth = labelWidth;
-             int newHeight = (int) (labelWidth / aspectRatio);
-             if (newHeight > labelHeight) {
-                 newHeight = labelHeight;
-                 newWidth = (int) (labelHeight * aspectRatio);
-             }
-             
-             if (image != null) {
-            	 Image sImage = image.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
-            	 videoLabel_SP.setText("");
-                 videoLabel_SP.setIcon(new ImageIcon(sImage));
-             }
-         }
-		 System.out.println("stopping the future at video Path : "+ videoPath);
-		 videoFuture.cancel(true);
-		 isPlaying = false;
-		 cap.release();
+	private void playVideo() {
+		FFmpegFrameGrabber frameGrabber= null;
+		try {
+			frameGrabber = new FFmpegFrameGrabber(videoPath);
+			frameGrabber.start();
+			System.out.println("FFmpeg initialized and video file opened.");
+			Java2DFrameConverter java2dFrameConverter = new Java2DFrameConverter();
+			
+			BufferedImage reusedBufferedImage = null;
+            int labelWidth = videoLabel_SP.getWidth();
+            int labelHeight = videoLabel_SP.getHeight();
+			
+			while(true) {
+				if(forceStop) {
+					System.out.println("ForceFully canceling the future at path: "+ videoPath);
+					isPlaying = false;
+					forceStop = false;
+					java2dFrameConverter.close();
+					frameGrabber.stop();
+					frameGrabber.close();
+					videoFuture.cancel(true);
+					System.out.println("Cancellation Success");
+					return;
+				}
+				
+				Frame frame = frameGrabber.grab();
+	             
+				if(frame == null) {
+					System.out.println("\nvideo Complete");
+					videoLabel_SP.setText("Kindly Select the video");
+					videoLabel_SP.setIcon(null);
+					break;
+				}
+				
+				BufferedImage img = java2dFrameConverter.convert(frame);
+				
+				if (img.getType() != BufferedImage.TYPE_INT_RGB) {
+                    BufferedImage temp = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB);
+                    Graphics2D g2d = temp.createGraphics();
+                    g2d.drawImage(img, 0, 0, null);
+                    g2d.dispose();
+                    img = temp;
+                }
+				
+				if(reusedBufferedImage == null || 
+						labelHeight != videoLabel_SP.getHeight() ||
+						labelWidth != videoLabel_SP.getWidth()) {
+					labelHeight = videoLabel_SP.getHeight();
+					labelWidth = videoLabel_SP.getWidth();
+					
+					reusedBufferedImage = scaleImageToFit(img, labelWidth, labelHeight);
+				}else {
+					scaleImageInPlace(img, reusedBufferedImage);
+				}
+				
+				BufferedImage finalImage = reusedBufferedImage;
+				
+				videoLabel_SP.setIcon(new ImageIcon(finalImage));
+				Thread.sleep(25);
+			}
+			java2dFrameConverter.close();
+			frameGrabber.stop();
+			frameGrabber.close();
+		}catch(Exception e) {
+			e.printStackTrace();
+			videoFuture.cancel(true);
+			isPlaying = false;
+			return;
+		}
+		videoFuture.cancel(true);
+		isPlaying = false;
 	}
 	
-	private BufferedImage matToBufferedImage(Mat mat) {
-    	int type = BufferedImage.TYPE_BYTE_GRAY;
-        if (mat.channels() > 1) {
-            type = BufferedImage.TYPE_3BYTE_BGR;
+	private BufferedImage scaleImageToFit(BufferedImage img, int maxWidth, int maxHeight) {
+		int imgWidth = img.getWidth();
+        int imgHeight = img.getHeight();
+
+        double aspectRatio = (double) imgWidth / imgHeight;
+        int newWidth = maxWidth;
+        int newHeight = maxHeight;
+
+        if ((double) maxWidth / imgWidth < (double) maxHeight / imgHeight) {
+            newHeight = (int) (maxWidth / aspectRatio);
+        } else {
+            newWidth = (int) (maxHeight * aspectRatio);
         }
-        int bufferSize = mat.channels() * mat.cols() * mat.rows();
-        byte[] b = new byte[bufferSize];
-        mat.get(0, 0, b);  // Get all the pixels
-        BufferedImage image = new BufferedImage(mat.cols(), mat.rows(), type);
-        final byte[] targetPixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
-        System.arraycopy(b, 0, targetPixels, 0, b.length);
-        return image;
-    }
+
+        BufferedImage scaledImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_RGB);
+        AffineTransform scaleTransform = AffineTransform.getScaleInstance(
+                (double) newWidth / imgWidth, (double) newHeight / imgHeight);
+        AffineTransformOp scaleOp = new AffineTransformOp(scaleTransform, AffineTransformOp.TYPE_BILINEAR);
+        scaleOp.filter(img, scaledImage);
+
+        return scaledImage;
+	}
+	
+	private void scaleImageInPlace(BufferedImage srcImage, BufferedImage destImage) {
+		double scaleX = (double) destImage.getWidth() / srcImage.getWidth();
+        double scaleY = (double) destImage.getHeight() / srcImage.getHeight();
+
+        AffineTransform scaleTransform = AffineTransform.getScaleInstance(scaleX, scaleY);
+        AffineTransformOp scaleOp = new AffineTransformOp(scaleTransform, AffineTransformOp.TYPE_BILINEAR);
+        scaleOp.filter(srcImage, destImage); 
+	}
 	
 	public String releaseResources() {
 		if(videoFuture != null) {
 			videoFuture.cancel(true);
-		}
-		if(cap != null && cap.isOpened()){
-			cap.release();
-			cap = null;
 		}
 		tableModel.setRowCount(0);
 		karpanTF_SP.setText("");
@@ -471,7 +513,7 @@ public class SearchPanel extends JPanel {
 		@Override
 		public Void call() throws Exception {
 			while(true) {
-				loadVideo();
+				playVideo();
 				if(Thread.currentThread().isInterrupted()) {
 					System.out.println("interrput is called");
 					throw new InterruptedException("Thread interrupted");

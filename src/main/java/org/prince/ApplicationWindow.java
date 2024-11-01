@@ -532,7 +532,7 @@ public class ApplicationWindow {
 		dCodeButtonGroup.add(dCodeNoRB_RP);
 		dCodeNoRB_RP.setSelected(true);
 		
-		convertCB_RP = new JCheckBox("Convert the video into MP4 format, and save both the files.");
+		convertCB_RP = new JCheckBox("Convert the video into MP4 format, and Save a Copy.");
 		convertCB_RP.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		convertCB_RP.setIconTextGap(5);
 		convertCB_RP.setHorizontalAlignment(SwingConstants.CENTER);
