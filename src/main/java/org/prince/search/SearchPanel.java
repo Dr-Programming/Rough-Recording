@@ -1,6 +1,6 @@
 // This sample panel is currently being developed.
-// And this is a Stable version-2 which is used in the application.
-// This version supports the viewing of video files with '.avi' extension using JavaCV
+// And this is a Stable version-3 which is used in the application.
+// This version has removed the thread running bug, while changing the view to some other view.
 // 1500 x 988
 
 package org.prince.search;
@@ -33,6 +33,7 @@ import java.util.concurrent.Future;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -58,6 +59,8 @@ public class SearchPanel extends JPanel {
 	
 	private JLabel videoLabel_SP;
 	
+	private JMenu viewMenu;
+	
 	private JScrollPane fileTable_sp_SP;
 	
 	private JTable filesTable_SP;
@@ -77,7 +80,7 @@ public class SearchPanel extends JPanel {
 	private volatile boolean forceStop = false;
 	
 	
-	private ExecutorService service = Executors.newCachedThreadPool();
+	private ExecutorService service = Executors.newCachedThreadPool();;
 	
 	private Future<?> videoFuture;
 
@@ -87,9 +90,10 @@ public class SearchPanel extends JPanel {
 	/**
 	 * Create the panel.
 	 */
-	public SearchPanel(ConfigManager configManager) {
+	public SearchPanel(ConfigManager configManager, JMenu viewMenu) {
 		nu.pattern.OpenCV.loadLocally();
 		this.configManager = configManager;
+		this.viewMenu = viewMenu;
 		setBackground(SystemColor.control);
 		SpringLayout springLayout = new SpringLayout();
 		setLayout(springLayout);
@@ -365,7 +369,7 @@ public class SearchPanel extends JPanel {
 		if(isPlaying) {
 			forceStop = true;
 			try {
-				Thread.sleep(500);
+				Thread.sleep(1000);
 			}catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -380,6 +384,7 @@ public class SearchPanel extends JPanel {
 	
 	private void playVideo() {
 		FFmpegFrameGrabber frameGrabber= null;
+		viewMenu.setEnabled(false);
 		try {
 			frameGrabber = new FFmpegFrameGrabber(videoPath);
 			frameGrabber.start();
@@ -449,6 +454,7 @@ public class SearchPanel extends JPanel {
 		}
 		videoFuture.cancel(true);
 		isPlaying = false;
+		viewMenu.setEnabled(true);
 	}
 	
 	private BufferedImage scaleImageToFit(BufferedImage img, int maxWidth, int maxHeight) {
@@ -496,6 +502,7 @@ public class SearchPanel extends JPanel {
 		consoleLog("Search resources released.");
 		String data = console_SP.getText();
 		console_SP.setText("");
+		
 		return data;
 	}
 	

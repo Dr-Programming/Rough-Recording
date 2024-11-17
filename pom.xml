@@ -35,6 +35,11 @@
 		    <artifactId>javacv-platform</artifactId>
 		    <version>1.5.10</version>
 		</dependency>
+		<dependency>
+            <groupId>com.github.oshi</groupId>
+            <artifactId>oshi-core</artifactId>
+            <version>6.1.4</version>
+        </dependency>
 	    <dependency>
 	        <groupId>org.apache.maven.plugins</groupId>
 	        <artifactId>maven-assembly-plugin</artifactId>
@@ -49,14 +54,18 @@
 	      <groupId>org.apache.maven.plugins</groupId>
 	      <artifactId>maven-assembly-plugin</artifactId>
 	      <configuration>
-	          <descriptorRefs>
+<!--	          <descriptorRefs>
 	              <descriptorRef>jar-with-dependencies</descriptorRef>
-	          </descriptorRefs>
+	          </descriptorRefs> -->
 	          <archive>
 	              <manifest>
+	              <addClasspath>false</addClasspath>
 	                <mainClass>org.prince.ApplicationWindow</mainClass>
 	              </manifest>
 	          </archive>
+	          <descriptors>
+	          	<descriptor>assembly.xml</descriptor>
+	          </descriptors>
 	      </configuration>
 	      <executions>
 	          <execution>

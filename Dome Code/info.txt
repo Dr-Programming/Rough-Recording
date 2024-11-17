@@ -1,0 +1,4 @@
+
+This folder will NOT be packaged in the final application which will be shared with the public.
+
+This folder is used just keep track of ESP32 code.

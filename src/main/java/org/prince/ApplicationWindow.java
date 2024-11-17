@@ -19,6 +19,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.LinkedList;
 import java.util.List;
@@ -58,6 +61,7 @@ import org.prince.inputs.BorderType;
 import org.prince.inputs.InputManager;
 import org.prince.properties.SaveLocationDialog;
 import org.prince.search.SearchPanel;
+import org.prince.security.client.SecurityManager;
 import org.prince.video.VideoFormatConvert;
 
 import com.github.sarxos.webcam.Webcam;
@@ -79,6 +83,7 @@ public class ApplicationWindow {
 
 	private JMenu cameraMenu;
 	private JMenu comPortMenu;
+	private JMenu viewMenu;
 	
 	private JMenuItem portList[];
 	
@@ -121,7 +126,6 @@ public class ApplicationWindow {
 	private ESP32 esp32;
 	
 	private FilesManager filesManager;
-
 	
 	
 	/**
@@ -139,7 +143,9 @@ public class ApplicationWindow {
 			public void run() {
 				try {
 					ApplicationWindow window = new ApplicationWindow();
-					window.frame.setVisible(true);
+					if(window.frame != null) {
+						window.frame.setVisible(true);
+					}
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -151,9 +157,22 @@ public class ApplicationWindow {
 	 * Create the application.
 	 */
 	public ApplicationWindow() {
+		
+		if(applicationVerification() == null) {
+			return;
+		}
+		
 		configManager = new ConfigManager();
 		filesManager = new FilesManager(configManager);
 		initialize();
+	}
+	
+	private String applicationVerification() {
+		if(!SecurityManager.isVerified()) {
+			JOptionPane.showMessageDialog(frame, "Cannot Verify the Application.\nKindly contact the developer.", "SparkleDi - Security Manager", JOptionPane.ERROR_MESSAGE);
+			return null;
+		}
+		return "";
 	}
 
 	/**
@@ -167,6 +186,9 @@ public class ApplicationWindow {
 		frame.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
+				if(esp32 != null) {
+					esp32.closeConnection();
+				}
 				getResourcesReleased();
 				setApplicationDataSession();
 			}
@@ -179,6 +201,8 @@ public class ApplicationWindow {
 		masterPanel = new JPanel();
 		frame.getContentPane().add(masterPanel, BorderLayout.CENTER);
 		masterPanel.setLayout(new CardLayout(0, 0));
+		
+		frame.setVisible(true);
 		
 		recordingPanel = new JPanel();
 		masterPanel.add(recordingPanel, "name_2331494577939800");
@@ -320,7 +344,7 @@ public class ApplicationWindow {
 		portStatusTF_RP.setEditable(false);
 		portStatusTF_RP.setColumns(10);
 		portStatusTF_RP.setBackground(Color.WHITE);
-		portStatusTF_RP.setBounds(85, 45, 508, 20);
+		portStatusTF_RP.setBounds(85, 45, 384, 20);
 		ControlPanel_RP.add(portStatusTF_RP);
 		
 		JLabel infoLabel_3_RP = new JLabel("Connection Status :");
@@ -539,7 +563,50 @@ public class ApplicationWindow {
 		convertCB_RP.setFont(new Font("Tahoma", Font.PLAIN, 15));
 		convertCB_RP.setBackground(Color.WHITE);
 		convertCB_RP.setBounds(96, 430, 417, 23);
+		convertCB_RP.setVisible(false);
 		ControlPanel_RP.add(convertCB_RP);
+		
+		JButton portConnectBtn_RP = new JButton("Connect");
+		portConnectBtn_RP.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				getDomeConection();
+			}
+		});
+		portConnectBtn_RP.setRequestFocusEnabled(false);
+		portConnectBtn_RP.setFocusable(false);
+		portConnectBtn_RP.setFocusTraversalKeysEnabled(false);
+		portConnectBtn_RP.setFocusPainted(false);
+		portConnectBtn_RP.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		portConnectBtn_RP.setFont(new Font("Monospaced", Font.BOLD, 14));
+		portConnectBtn_RP.setBounds(481, 45, 112, 20);
+		ControlPanel_RP.add(portConnectBtn_RP);
+		
+		JLabel reCheckLbl_RP = new JLabel("Re-Check");
+		reCheckLbl_RP.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if(isCamSet && isPortSet) {
+					connStatusTF_RP.setText("Connected");
+				}else if(isCamSet || isPortSet){
+					connStatusTF_RP.setText("Partial");
+				}else {
+					connStatusTF_RP.setText("Not Cpnnected");
+				}
+			}
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				reCheckLbl_RP.setFont(new Font("Tahoma", Font.ITALIC | Font.BOLD, 13));
+			}
+			@Override
+			public void mouseExited(MouseEvent e) {
+				reCheckLbl_RP.setFont(new Font("Tahoma", Font.PLAIN | Font.ITALIC, 13));
+			}
+		});
+		reCheckLbl_RP.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		reCheckLbl_RP.setHorizontalAlignment(SwingConstants.CENTER);
+		reCheckLbl_RP.setFont(new Font("Tahoma", Font.ITALIC, 13));
+		reCheckLbl_RP.setBounds(503, 92, 65, 14);
+		ControlPanel_RP.add(reCheckLbl_RP);
 		
 		dCodeYesRB_RP.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -591,10 +658,10 @@ public class ApplicationWindow {
 		JMenuBar menuBar = new JMenuBar();
 		frame.setJMenuBar(menuBar);
 		
-		JMenu viewMenu = new JMenu("View");
+		viewMenu = new JMenu("View");
 		menuBar.add(viewMenu);
 		
-		SearchPanel searchPanel = new SearchPanel(configManager);
+		SearchPanel searchPanel = new SearchPanel(configManager, viewMenu);
 		
 		JMenuItem recordingViewMenuItem = new JMenuItem("Recording View");
 		recordingViewMenuItem.addActionListener(new ActionListener() {
@@ -657,6 +724,16 @@ public class ApplicationWindow {
 		propertiesMenu.add(cameraMenu);
 	}
 	
+	private void getDomeConection() {
+		if(isESP32) {
+			if(esp32.getConnection()) {
+				isPortSet = true;
+			}else {
+				JOptionPane.showMessageDialog(frame, "Connection Failed", "onnection Manager", JOptionPane.ERROR_MESSAGE);
+			}
+		}
+	}
+	
 	private void actionButton() {
 		if(camIndex == 10001) {
 			connStatusTF_RP.setText("Failed");
@@ -712,7 +789,7 @@ public class ApplicationWindow {
 		if(!isRecording && isLive) {
 			if(selectedPortIndex == 20001) {
 				consoleLog("Kindly select the COM PORT.");
-				JOptionPane.showMessageDialog(frame, "Connect connect to the System.", "Connection Manager", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(frame, "Cannot connect to the System.", "Connection Manager", JOptionPane.ERROR_MESSAGE);
 				return;
 			}
 			System.out.println("Starting Recording....");
@@ -742,6 +819,12 @@ public class ApplicationWindow {
 			}
 			
 			saveToPathOfVideo = filesManager.createPath(karpanTF_RP.getText(), dCodeTF_RP.getText(), karpanYesRB_RP.isSelected(), dCodeYesRB_RP.isSelected());
+			System.out.println("SAVE PATH : " + saveToPathOfVideo);
+			Path path = Paths.get(saveToPathOfVideo);
+			if(!Files.exists(path)) {
+				JOptionPane.showMessageDialog(frame, "No such directory found.\nPlease check Karpan No. and Diamond No. again.", "File Manager", JOptionPane.INFORMATION_MESSAGE);
+				return;
+			}
 			
 			File testFile = new File(saveToPathOfVideo + File.separator + weightTF_RP.getText() +" cts.avi");
 			if(testFile.exists()) {
@@ -793,6 +876,7 @@ public class ApplicationWindow {
 		LinkedList<String> portNameList = esp32.getPortNameList();
 		if(portNameList == null) {
 			JOptionPane.showMessageDialog(frame, "No Com Ports Available.","COM PORTS", JOptionPane.ERROR_MESSAGE);
+			isESP32 = false;
 			return;
 		}
 		if(!portNameList.isEmpty()) {
@@ -807,9 +891,9 @@ public class ApplicationWindow {
 					public void actionPerformed(ActionEvent e) {
 						System.out.println(portNameList.get(aq)+ " is selected");
 						selectedPortIndex = aq;
+						esp32.setSelectedPort(aq);
 						portStatusTF_RP.setText(portNameList.get(aq));
 						consoleLog("Com Port : "+ portNameList.get(aq) + " is SELECTED.");
-						isPortSet = true;
 					}
 				});
 				comPortMenu.add(portList[az]);
@@ -850,7 +934,7 @@ public class ApplicationWindow {
 	
 	private void ESP32Con() {
 		System.out.println("ESPcon called");
-		esp32.sendMessage(selectedPortIndex);
+		esp32.sendData(karpanTF_RP.getText()+"-"+dCodeTF_RP.getText());
 	}
 	
 	private void avi4mp4() {
