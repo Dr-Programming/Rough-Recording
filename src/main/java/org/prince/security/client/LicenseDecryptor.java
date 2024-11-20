@@ -28,7 +28,7 @@ class LicenseDecryptor {
 		
 		String passphrase = HardwareFingerprint.getHardwareFingerprint();
 		
-		byte[] encryptedPrivateKeyBytes = Files.readAllBytes(Paths.get("C:\\Users\\princ\\OneDrive\\Desktop\\App Setup\\customerPrivateKey.key"));
+		byte[] encryptedPrivateKeyBytes = Files.readAllBytes(Paths.get("src/main/resources/sysFiles/customerPrivateKey.key"));
 		EncryptedPrivateKeyInfo encryptedPrivateKeyInfo = new EncryptedPrivateKeyInfo(encryptedPrivateKeyBytes);
 		
 		PBEKeySpec pbeKeySpec = new PBEKeySpec(passphrase.toCharArray());
@@ -41,6 +41,7 @@ class LicenseDecryptor {
 		PrivateKey privateKey = KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(decryptedPrivateKeyBytes));
 		
 		byte[] encryptedAesKey = Base64.getDecoder().decode(Files.readAllBytes(Paths.get("C:\\Users\\princ\\OneDrive\\Desktop\\App Setup\\AesKey.key")));
+		byte[] encryptedAesKey = Base64.getDecoder().decode(Files.readAllBytes(Paths.get("src/main/resources/sysFiles/AesKey.key")));
 		
 		Cipher rsaCipher = Cipher.getInstance("RSA");
 		rsaCipher.init(Cipher.DECRYPT_MODE, privateKey);
@@ -48,7 +49,7 @@ class LicenseDecryptor {
 		byte[] aesKeyBytes = rsaCipher.doFinal(encryptedAesKey);
 		SecretKey aesKey = new SecretKeySpec(aesKeyBytes, "AES");
 		
-		byte[] encryptedLicenseData = Base64.getDecoder().decode(Files.readAllBytes(Paths.get("C:\\Users\\princ\\OneDrive\\Desktop\\App Setup\\license.enc")));
+		byte[] encryptedLicenseData = Base64.getDecoder().decode(Files.readAllBytes(Paths.get("src/main/resources/sysFiles/license.enc")));
 		
 		Cipher aesCipher = Cipher.getInstance("AES");
 		aesCipher.init(Cipher.DECRYPT_MODE, aesKey);
