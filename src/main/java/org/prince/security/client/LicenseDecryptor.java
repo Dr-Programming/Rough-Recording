@@ -40,7 +40,6 @@ class LicenseDecryptor {
 		byte[] decryptedPrivateKeyBytes = cipher.doFinal(encryptedPrivateKeyInfo.getEncryptedData());
 		PrivateKey privateKey = KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(decryptedPrivateKeyBytes));
 		
-		byte[] encryptedAesKey = Base64.getDecoder().decode(Files.readAllBytes(Paths.get("C:\\Users\\princ\\OneDrive\\Desktop\\App Setup\\AesKey.key")));
 		byte[] encryptedAesKey = Base64.getDecoder().decode(Files.readAllBytes(Paths.get("src/main/resources/sysFiles/AesKey.key")));
 		
 		Cipher rsaCipher = Cipher.getInstance("RSA");
