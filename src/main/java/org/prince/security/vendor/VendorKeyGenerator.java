@@ -44,7 +44,7 @@ public class VendorKeyGenerator {
 		System.out.print("\nEnter path to save Private Key : ");
 		String privateKeyPath = sc.nextLine();
 		
-		generateKeyPair(publicKeyPath+"\\publicKey.pem", privateKeyPath+"\\privateKey.pem");
+		generateKeyPair(publicKeyPath+"\\sysinfo.pem", privateKeyPath+"\\privateKey.pem");
 		sc.close();
 	}
 }

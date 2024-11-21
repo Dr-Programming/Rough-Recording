@@ -12,11 +12,13 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.time.LocalDate;
 import java.util.Base64;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.swing.JOptionPane;
 
 class LicenseVerifier {
 	
@@ -37,13 +39,23 @@ class LicenseVerifier {
 		String licenseContent = new String(LicenseDecryptor.decryptLicense());
 		String[] parts = licenseContent.split(":");
 		
-		if(parts.length != 2) {
+		if(parts.length != 3) {
 			throw new IllegalArgumentException("Invalid license file format");
 		}
 		
+		byte[] dateSignature = Base64.getDecoder().decode(parts[2]);
+		LocalDate dateObj = LocalDate.now();
+		if(verifySignature(dateObj.toString(), dateSignature, publicKey)) {
+			LicenseDecryptor.nullify();
+			SecurityManager.isVerified();
+			JOptionPane.showMessageDialog(null, "Your License has Expired!\n Contact Creator to resume your services.", "SparkleDi - Security Manager", JOptionPane.ERROR_MESSAGE);
+			throw new RuntimeException();
+		}
+		
+		System.out.println("Date : " + verifySignature(dateObj.toString(), dateSignature, publicKey));
+		
 		String machineID = parts[0];
 		byte[] signature = Base64.getDecoder().decode(parts[1]);
-		
 		String customerMachineId = HardwareFingerprint.getHardwareFingerprint();
 		
 		return machineID.equals(customerMachineId) && verifySignature(customerMachineId, signature, publicKey);

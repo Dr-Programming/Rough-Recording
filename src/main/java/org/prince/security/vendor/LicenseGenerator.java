@@ -26,7 +26,7 @@ public class LicenseGenerator {
 		return signature.sign();
 	}
 	
-	private static void generateLicense(String machineID, String privateKeyPath, String licenseFilePath) {
+	private static void generateLicense(String machineID, String privateKeyPath, String licenseFilePath, String endDate) {
 		
 		try {
 			byte[] privateKeyBytes = Files.readAllBytes(Paths.get(privateKeyPath));
@@ -34,7 +34,9 @@ public class LicenseGenerator {
 			
 			byte[] signature = signData(machineID, privateKey);
 			
-			String licenseContent = machineID + ":" + Base64.getEncoder().encodeToString(signature);
+			byte[] dateSignature = signData(endDate, privateKey);
+			
+			String licenseContent = machineID + ":" + Base64.getEncoder().encodeToString(signature) + ":" + Base64.getEncoder().encodeToString(dateSignature);
 			Files.write(Paths.get(licenseFilePath), licenseContent.getBytes());
 			
 		} catch (IOException | InvalidKeySpecException | NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
@@ -50,13 +52,16 @@ public class LicenseGenerator {
 		System.out.print("Enter Machine ID : ");
 		String machineID = sc.nextLine();
 		
+		System.out.print("Enter End Date : ");
+		String date = sc.nextLine();
+		
 		System.out.println("\nEnter Private Key Path : ");
 		String privateKeyPath = sc.nextLine();
 		
 		System.out.println("\nEnter Location to save the License File : ");
 		String licenseFilePath = sc.nextLine();
 		
-		generateLicense(machineID, privateKeyPath, licenseFilePath+"\\license.lic");
+		generateLicense(machineID, privateKeyPath, licenseFilePath+"\\license.lic", date);
 		System.out.println("License Generated.");
 		sc.close();
 	}

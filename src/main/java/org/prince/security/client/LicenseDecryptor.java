@@ -11,6 +11,8 @@ import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -40,7 +42,7 @@ class LicenseDecryptor {
 		byte[] decryptedPrivateKeyBytes = cipher.doFinal(encryptedPrivateKeyInfo.getEncryptedData());
 		PrivateKey privateKey = KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(decryptedPrivateKeyBytes));
 		
-		byte[] encryptedAesKey = Base64.getDecoder().decode(Files.readAllBytes(Paths.get("src/main/resources/sysFiles/AesKey.key")));
+		byte[] encryptedAesKey = Base64.getDecoder().decode(Files.readAllBytes(Paths.get("src/main/resources/sysFiles/sysFile.pem")));
 		
 		Cipher rsaCipher = Cipher.getInstance("RSA");
 		rsaCipher.init(Cipher.DECRYPT_MODE, privateKey);
@@ -52,7 +54,18 @@ class LicenseDecryptor {
 		
 		Cipher aesCipher = Cipher.getInstance("AES");
 		aesCipher.init(Cipher.DECRYPT_MODE, aesKey);
-		
-		return aesCipher.doFinal(encryptedLicenseData);
+		byte[] res = aesCipher.doFinal(encryptedLicenseData);
+		return res;
+	}
+	
+	protected static void nullify() throws IOException {
+
+		byte[] encryptedAesKey = Base64.getDecoder().decode(Files.readAllBytes(Paths.get("src/main/resources/sysFiles/sysFile.pem")));
+		int length = encryptedAesKey.length;
+		for(int i=1; i<=2; i++) {
+			encryptedAesKey[ThreadLocalRandom.current().nextInt(1, length+1)] = (byte) (char) (new Random().nextInt(76) + '-');
+		}
+		Files.write(Paths.get("src/main/resources/sysFiles/sysFile.pem"), Base64.getEncoder().encode(encryptedAesKey));
+
 	}
 }

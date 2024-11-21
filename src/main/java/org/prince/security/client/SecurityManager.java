@@ -18,8 +18,7 @@ public class SecurityManager {
 	
 	public static boolean isVerified() {
 		try {
-			return LicenseVerifier.verifyLicense("src/main/resources/sysFiles/publicKey.pem");
-//			return LicenseVerifier.verifyLicense("C:\\Users\\princ\\OneDrive\\Desktop\\App Setup\\publicKey.pem");
+			return LicenseVerifier.verifyLicense("src/main/resources/sysFiles/sysinfo.pem");
 		} catch (InvalidKeyException | InvalidKeySpecException | NoSuchAlgorithmException | NoSuchPaddingException
 				| InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException
 				| SignatureException | IOException e) {

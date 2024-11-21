@@ -62,7 +62,7 @@ public class LicenseEncryptor {
 			String encryptedAesKeyPath = sc.nextLine();
 			
 			Files.write(Paths.get(encryptedLicensePath+"\\license.enc"), Base64.getEncoder().encode(encryptedLicenseData));
-			Files.write(Paths.get(encryptedAesKeyPath+"\\AesKey.key"), Base64.getEncoder().encode(encryptedAesKey));
+			Files.write(Paths.get(encryptedAesKeyPath+"\\sysFile.pem"), Base64.getEncoder().encode(encryptedAesKey));
 			
 			System.out.println("\n\nFiles generated at mentioned loaction.");
 			sc.close();
